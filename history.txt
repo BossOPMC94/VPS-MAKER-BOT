@@ -1,0 +1,88 @@
+    1  clear
+    2  passwd root
+    3  clear
+    4  exit
+    5  clear
+    6  passwd root
+    7  clear
+    8  lcear
+    9  clear
+   10  apt install neofetch -y
+   11  clear
+   12  neofetch
+   13  clear
+   14  speedtest-cli
+   15  apt install speedtest-cli -y
+   16  speedtest-cli
+   17  clear
+   18  docker ps
+   19  clear
+   20  apt install docker.io -y
+   21  docker ps
+   22  clear
+   23  clea
+   24  clear
+   25  neofetch
+   26  clear
+   27  htop
+   28  clear
+   29  nano main.py
+   30  ls
+   31  nano main.py
+   32  nano dockerfile
+   33  docker build -t ubuntu-22.04-with-tmate -f dockerfile .
+   34  pip3 install discord docker
+   35  apt install python3-pip -y
+   36  nano dockerfile
+   37  nano main.py
+   38  ls
+   39  python3 main.py
+   40  pip3 install discord docker
+   41  python3 main.py
+   42  ls
+   43  nano /anti.sh
+   44  bash /anti.sh
+   45  bash /anti.sh &
+   46  python3 main.py
+   47  python3 main.py &
+   48  clear
+   49  sudo nano /lib/systemd/system/shellscript.service 
+   50  ls /
+   51  nano /lib/systemd/system/discordbot.service
+   52  systemctl enable --now shellscript
+   53  systemctl enable --now discordbot
+   54  systemctl status shellscript
+   55  systemctl start shellscript
+   56  systemctl start discordbot
+   57  systemctl status discordbot
+   58  ls /
+   59  ls
+   60  mv main.py
+   61  mv main.py /bot.py
+   62  systemctl restart discordbot
+   63  echo 2139999999 | tee /proc/sys/fs/inotify/max_user_instances
+   64  htop
+   65  clear
+   66  pkill node
+   67  htop
+   68  nano /anti.sh
+   69  rm -rf /anti.sh
+   70  nano /anti.sh
+   71  systemctl restart shellscript
+   72  htop
+   73  clear
+   74  docker rm -v -f $(docker ps -qa)
+   75  ls
+   76  nano /bot.py
+   77  systemctl restart shellscript discordbot
+   78  htop
+   79  nano /anti.sh
+   80  systemctl restart shellscript discordbot
+   81  clear
+   82  ls
+   83  history
+   84  echo $(history) >> history.txt
+   85  ls
+   86  nano history.txt 
+   87  rm -rf history.txt 
+   88  history > history.txt
