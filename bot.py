@@ -12,9 +12,10 @@ import docker
 import asyncio
 from discord import app_commands
 
-TOKEN = 'MTI2OTYxOTUxODAwMzc0MDc4NA.Glaq4v.sz-c8-4BVbMNubFbZpzuxdsTEVmoe9rfBeQSnI' # TOKEN HERE
-RAM_LIMIT = '2g'
-SERVER_LIMIT = 2
+# Bot Configuration and Constants
+TOKEN = ''
+RAM_LIMIT = '2g' #Set Your Own Ram How Much You Want To Give Your Users
+SERVER_LIMIT = 2 #you can change it!
 database_file = 'database.txt'
 
 intents = discord.Intents.default()
@@ -23,6 +24,125 @@ intents.message_content = False
 
 bot = commands.Bot(command_prefix='/', intents=intents)
 client = docker.from_env()
+
+whitelist_ids = {"1128161197766746213"}  # Replace with actual user IDs
+
+# Utility Functions
+def add_to_database(userid, container_name, ssh_command):
+    with open(database_file, 'a') as f:
+        f.write(f"{userid}|{container_name}|{ssh_command}\n")
+
+def remove_from_database(ssh_command):
+    if not os.path.exists(database_file):
+        return
+    with open(database_file, 'r') as f:
+        lines = f.readlines()
+    with open(database_file, 'w') as f:
+        for line in lines:
+            if ssh_command not in line:
+                f.write(line)
+
+def get_user_servers(user):
+    if not os.path.exists(database_file):
+        return []
+    servers = []
+    with open(database_file, 'r') as f:
+        for line in f:
+            if line.startswith(user):
+                servers.append(line.strip())
+    return servers
+
+def count_user_servers(userid):
+    return len(get_user_servers(userid))
+
+def get_container_id_from_database(userid, container_name):
+    if not os.path.exists(database_file):
+        return None
+    with open(database_file, 'r') as f:
+        for line in f:
+            if line.startswith(userid) and container_name in line:
+                return line.split('|')[1]
+    return None
+
+def generate_random_port():
+    return random.randint(1025, 65535)
+
+async def capture_ssh_session_line(process):
+    while True:
+        output = await process.stdout.readline()
+        if not output:
+            break
+        output = output.decode('utf-8').strip()
+        if "ssh session:" in output:
+            return output.split("ssh session:")[1].strip()
+    return None
+
+# Node Status Command
+def get_node_status():
+    try:
+        containers = client.containers.list(all=True)
+        container_status = "\n".join([f"{container.name} - {container.status}" for container in containers]) or "No containers running."
+        
+        # Get system-wide memory usage using `os` module
+        with open('/proc/meminfo', 'r') as f:
+            meminfo = f.read()
+        mem_total = int(re.search(r'MemTotal:\s+(\d+)', meminfo).group(1)) / 1024  # Convert to MB
+        mem_free = int(re.search(r'MemFree:\s+(\d+)', meminfo).group(1)) / 1024  # Convert to MB
+        mem_available = int(re.search(r'MemAvailable:\s+(\d+)', meminfo).group(1)) / 1024  # Convert to MB
+
+        memory_used = mem_total - mem_available
+        memory_percentage = (memory_used / mem_total) * 100 if mem_total else 0
+
+        node_info = {
+            "containers": container_status,
+            "memory_total": mem_total,
+            "memory_used": memory_used,
+            "memory_percentage": memory_percentage
+        }
+        return node_info
+    except Exception as e:
+        return str(e)
+
+@bot.tree.command(name="node", description="Show the current status of the VPS node.")
+async def node_status(interaction: discord.Interaction):
+    try:
+        node_info = get_node_status()
+
+        if isinstance(node_info, str):  # If there's an error
+            await interaction.response.send_message(embed=discord.Embed(description=f"### Error fetching node status: {node_info}", color=0xff0000))
+            return
+
+        # Format the status message
+        embed = discord.Embed(title="VPS Node Status", color=0x00ff00)
+        embed.add_field(name="Containers", value=node_info["containers"], inline=False)
+        embed.add_field(name="Memory Usage", value=f"{node_info['memory_used']:.2f} / {node_info['memory_total']:.2f} MB ({node_info['memory_percentage']:.2f}%)", inline=False)
+
+        await interaction.response.send_message(embed=embed)
+
+    except Exception as e:
+        await interaction.response.send_message(embed=discord.Embed(description=f"### Failed to fetch node status: {str(e)}", color=0xff0000))
+
+# Remove Everything Task
+async def remove_everything_task(interaction: discord.Interaction):
+    await interaction.channel.send("### Node is full. Resetting all user instances...")
+    try:
+        subprocess.run("docker rm -f $(sudo docker ps -a -q)", shell=True, check=True)
+        os.remove(database_file)
+        subprocess.run("pkill pytho*", shell=True, check=True)
+        await interaction.channel.send("### All instances and data have been reset.")
+    except Exception as e:
+        await interaction.channel.send(f"### Failed to reset instances: {str(e)}")
+
+# KillVPS Command (Admin only)
+@bot.tree.command(name="killvps", description="Kill all user VPS instances. Admin only.")
+async def kill_vps(interaction: discord.Interaction):
+    userid = str(interaction.user.id)
+    if userid not in whitelist_ids:
+        await interaction.response.send_message(embed=discord.Embed(description="You do not have permission to use this command.", color=0xff0000))
+        return
+
+    await remove_everything_task(interaction)
+    await interaction.response.send_message(embed=discord.Embed(description="### All user VPS instances have been terminated.", color=0x00ff00))
 
 def add_to_database(userid, container_name, ssh_command):
     with open(database_file, 'a') as f:
@@ -48,7 +168,7 @@ async def capture_ssh_session_line(process):
             return output.split("ssh session:")[1].strip()
     return None
 
-whitelist_ids = {"10667071509206267914"}  # Replace with actual user IDs
+whitelist_ids = {"1128161197766746213"}  # Replace with actual user IDs
 
 @bot.tree.command(name="remove-everything", description="Removes all data and containers")
 async def remove_everything(interaction: discord.Interaction):
