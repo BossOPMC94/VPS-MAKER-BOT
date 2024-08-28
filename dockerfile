@@ -12,6 +12,7 @@ RUN pip install discord.py==2.4.0
 RUN pip install docker==7.1.0
 RUN pip install python-dotenv==1.0.1
 RUN pip install colorama==0.4.6
+RUN cd VPS-MAKER-BOT
 RUN python3 bot.py
 
 CMD ["bash"]
