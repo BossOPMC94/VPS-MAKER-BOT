@@ -8,7 +8,10 @@ RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d
 RUN apt-get install -y systemd systemd-sysv dbus dbus-user-session
 RUN printf "systemctl start systemd-logind" >> /etc/profile
 RUN apt install python3-pip -y
-RUN pip install -r requirements.txt
+RUN pip install discord.py==2.4.0
+RUN pip install docker==7.1.0
+RUN pip install python-dotenv==1.0.1
+RUN pip install colorama==0.4.6
 RUN python3 bot.py
 
 CMD ["bash"]
