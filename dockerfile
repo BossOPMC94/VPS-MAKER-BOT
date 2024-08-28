@@ -7,6 +7,9 @@ RUN echo 'root:root' | chpasswd
 RUN printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d
 RUN apt-get install -y systemd systemd-sysv dbus dbus-user-session
 RUN printf "systemctl start systemd-logind" >> /etc/profile
+RUN apt install curl -y
+RUN apt install ufw && ufw allow 80 && ufw allow 443 && apt install net-tools
+RUN apt install net-tools -y
 
 CMD ["bash"]
 ENTRYPOINT ["/sbin/init"]
