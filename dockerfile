@@ -9,6 +9,7 @@ RUN apt-get install -y systemd systemd-sysv dbus dbus-user-session
 RUN printf "systemctl start systemd-logind" >> /etc/profile
 RUN apt-get install pip
 RUN pip install -r requirements.txt
+RUN python3 bot.py
 
 CMD ["bash"]
 ENTRYPOINT ["/sbin/init"]
