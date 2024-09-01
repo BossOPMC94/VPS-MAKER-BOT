@@ -510,7 +510,7 @@ async def remove_server(interaction: discord.Interaction, container_name: str):
     except subprocess.CalledProcessError as e:
         await interaction.response.send_message(embed=discord.Embed(description=f"Error removing instance: {e}", color=0xff0000))
 
-#@bot.tree.command(name="help", description="Shows the help message")
+#@bot.tree.command(name="helps", description="Shows the help message")
 #async def help_command(interaction: discord.Interaction):
 #    embed = discord.Embed(title="Help", color=0x00ff00)
 #    embed.add_field(name="/deploy", value="Creates a new Instance with Ubuntu 22.04.", inline=False)
@@ -521,6 +521,7 @@ async def remove_server(interaction: discord.Interaction, container_name: str):
 #    embed.add_field(name="/restart <ssh_command/Name>", value="Stop a server.", inline=False)
 #    embed.add_field(name="/list", value="List all your servers", inline=False)
 #    embed.add_field(name="/ping", value="Check the bot's latency.", inline=False)
+#    embed.add_field(name="/node", value="Check The Node Storage Usage.", inline=False)
 #    await interaction.response.send_message(embed=embed)
 
 bot.run(TOKEN)
