@@ -7,8 +7,12 @@ add token!
 you are done
 
 
+
 Paid Version Also Available!
 
 
 
 # Made By BossOPMC
+
+### ✨️ ``Features`` ✨️
+
