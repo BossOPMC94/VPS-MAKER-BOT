@@ -11,9 +11,10 @@ from discord.ext import commands, tasks
 import docker
 import asyncio
 from discord import app_commands
+import requests
 
-# Bot Configuration and Constants
-TOKEN = ''
+# Set Your Bot Token gay
+TOKEN = '
 RAM_LIMIT = '2g' #Set Your Own Ram How Much You Want To Give Your Users
 SERVER_LIMIT = 2 #you can change it!
 database_file = 'database.txt'
@@ -77,12 +78,57 @@ async def capture_ssh_session_line(process):
             return output.split("ssh session:")[1].strip()
     return None
 
+
+
+# In-memory database for user credits
+user_credits = {}
+
+# Cuty.io API key (Your account key)
+API_KEY = 'ebe681f9e37ef61fcfd756396'
+
+# Slash command: earnCredit
+@bot.tree.command(name="earncredit", description="Generate a URL to shorten and earn credits.")
+async def earncredit(interaction: discord.Interaction):
+    print("Received request to shorten URL")
+    user_id = interaction.user.id
+
+    # Define a default URL to shorten
+    default_url = "https://cuty.io/e58WUzLMmE3S"  # Change this as needed
+
+    # Make a request to Cuty.io API to shorten the default URL
+    api_url = f"https://cutt.ly/api/api.php?key={API_KEY}&short={default_url}"
+    print(f"Making API call to: {api_url}")
+    response = requests.get(api_url).json()
+    print(f"API response: {response}")
+
+    # Check if the URL was successfully shortened
+    if response['url']['status'] == 7:
+        shortened_url = response['url']['shortLink']
+        credits_earned = 1  # Update to 1 credit for each shortening
+
+        # Add credits to user
+        user_credits[user_id] = user_credits.get(user_id, 0) + credits_earned
+
+        await interaction.response.send_message(f"Success! Here's your shortened URL: {shortened_url}. You earned {credits_earned} credit!")
+    else:
+        # Handle API error messages
+        error_message = response['url'].get('title', 'Failed to generate a shortened URL. Please try again.')
+        await interaction.response.send_message(error_message)
+
+# Slash command: bal
+@bot.tree.command(name="bal", description="Check your credit balance.")
+async def bal(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    credits = user_credits.get(user_id, 0)
+    await interaction.response.send_message(f"You have {credits} credits.")
+
+
 # Node Status Command
 def get_node_status():
     try:
         containers = client.containers.list(all=True)
         container_status = "\n".join([f"{container.name} - {container.status}" for container in containers]) or "No containers running."
-        
+
         # Get system-wide memory usage using `os` module
         with open('/proc/meminfo', 'r') as f:
             meminfo = f.read()
@@ -113,7 +159,7 @@ async def node_status(interaction: discord.Interaction):
             return
 
         # Format the status message
-        embed = discord.Embed(title="VPS Node Status", color=0x00ff00)
+        embed = discord.Embed(title="VPS Node1 Status", color=0x00ff00)
         embed.add_field(name="Containers", value=node_info["containers"], inline=False)
         embed.add_field(name="Memory Usage", value=f"{node_info['memory_used']:.2f} / {node_info['memory_total']:.2f} MB ({node_info['memory_percentage']:.2f}%)", inline=False)
 
@@ -121,6 +167,43 @@ async def node_status(interaction: discord.Interaction):
 
     except Exception as e:
         await interaction.response.send_message(embed=discord.Embed(description=f"### Failed to fetch node status: {str(e)}", color=0xff0000))
+
+
+@bot.tree.command(name="renew", description="Renew a VPS for 8 days using 2 credits.")
+@app_commands.describe(vps_id="ID of the VPS to renew")
+async def renew(interaction: discord.Interaction, vps_id: str):
+    user_id = str(interaction.user.id)
+    credits = user_credits.get(user_id, 0)
+
+    # Check if user has enough credits
+    if credits < 2:
+        await interaction.response.send_message(embed=discord.Embed(
+            description="You don't have enough credits to renew the VPS. You need 2 credits.",
+            color=0xff0000))
+        return
+
+    # Get VPS from the database (check if VPS exists for the user)
+    container_id = get_container_id_from_database(user_id, vps_id)
+    if not container_id:
+        await interaction.response.send_message(embed=discord.Embed(
+            description=f"VPS with ID {vps_id} not found.",
+            color=0xff0000))
+        return
+
+    # Deduct credits
+    user_credits[user_id] -= 2
+
+    # Renew VPS: Add 8 days to the current expiry
+    renewal_date = datetime.now() + timedelta(days=8)
+    vps_renewals[vps_id] = renewal_date
+
+    # You may also want to log this in a persistent database, not just in memory
+
+    await interaction.response.send_message(embed=discord.Embed(
+        description=f"VPS {vps_id} has been renewed for 8 days. New expiry date: {renewal_date.strftime('%Y-%m-%d')}. "
+                    f"You now have {user_credits[user_id]} credits remaining.",
+        color=0x00ff00))
+
 
 # Remove Everything Task
 async def remove_everything_task(interaction: discord.Interaction):
@@ -464,10 +547,10 @@ async def port_add(interaction: discord.Interaction, container_name: str, contai
             stdout=asyncio.subprocess.DEVNULL,  # No need to capture output
             stderr=asyncio.subprocess.DEVNULL  # No need to capture errors
         )
-        
+
         # Respond immediately with the port and public IP
         await interaction.followup.send(embed=discord.Embed(description=f"### Port added successfully. Your service is hosted on {PUBLIC_IP}:{public_port}.", color=0x00ff00))
-    
+
     except Exception as e:
         await interaction.followup.send(embed=discord.Embed(description=f"### An unexpected error occurred: {e}", color=0xff0000))
 
@@ -510,18 +593,24 @@ async def remove_server(interaction: discord.Interaction, container_name: str):
     except subprocess.CalledProcessError as e:
         await interaction.response.send_message(embed=discord.Embed(description=f"Error removing instance: {e}", color=0xff0000))
 
-#@bot.tree.command(name="helps", description="Shows the help message")
-#async def help_command(interaction: discord.Interaction):
-#    embed = discord.Embed(title="Help", color=0x00ff00)
-#    embed.add_field(name="/deploy", value="Creates a new Instance with Ubuntu 22.04.", inline=False)
-#    embed.add_field(name="/remove <ssh_command/Name>", value="Removes a server", inline=False)
-#    embed.add_field(name="/start <ssh_command/Name>", value="Start a server.", inline=False)
-#    embed.add_field(name="/stop <ssh_command/Name>", value="Stop a server.", inline=False)
-#    embed.add_field(name="/regen-ssh <ssh_command/Name>", value="Regenerates SSH cred", inline=False)
-#    embed.add_field(name="/restart <ssh_command/Name>", value="Stop a server.", inline=False)
-#    embed.add_field(name="/list", value="List all your servers", inline=False)
-#    embed.add_field(name="/ping", value="Check the bot's latency.", inline=False)
-#    embed.add_field(name="/node", value="Check The Node Storage Usage.", inline=False)
-#    await interaction.response.send_message(embed=embed)
 
+@bot.tree.command(name="help", description="Shows the help message")
+async def help_command(interaction: discord.Interaction):
+    embed = discord.Embed(title="help", color=0x00ff00)
+    embed.add_field(name="/deploy", value="Creates a new Instance with Ubuntu 22.04.", inline=False)
+    embed.add_field(name="/remove <ssh_command/Name>", value="Removes a server", inline=False)
+    embed.add_field(name="/start <ssh_command/Name>", value="Start a server.", inline=False)
+    embed.add_field(name="/stop <ssh_command/Name>", value="Stop a server.", inline=False)
+    embed.add_field(name="/regen-ssh <ssh_command/Name>", value="Regenerates SSH cred", inline=False)
+    embed.add_field(name="/restart <ssh_command/Name>", value="Stop a server.", inline=False)
+    embed.add_field(name="/list", value="List all your servers", inline=False)
+    embed.add_field(name="/ping", value="Check the bot's latency.", inline=False)
+    embed.add_field(name="/node", value="Check The Node Storage Usage.", inline=False)
+    embed.add_field(name="/bal", value="Check Your Balance.", inline=False)
+    embed.add_field(name="/renew", value="Renew The VPS.", inline=False)
+    embed.add_field(name="/earncredit", value="earn the credit.", inline=False)
+    await interaction.response.send_message(embed=embed)
+
+
+# run the bot
 bot.run(TOKEN)
