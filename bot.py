@@ -430,7 +430,7 @@ async def create_server_task(interaction):
 
     try:
         container_id = subprocess.check_output([
-            "docker", "run", "-itd", "--privileged", "--cap-add=ALL", image
+           "docker", "run", "-itd", "--privileged", "--hostname", "crashcloud", "--cap-add=ALL", image
         ]).strip().decode('utf-8')
     except subprocess.CalledProcessError as e:
         await interaction.followup.send(embed=discord.Embed(description=f"### Error creating Docker container: {e}", color=0xff0000))
