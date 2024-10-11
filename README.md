@@ -25,9 +25,7 @@ BTW IF YOU INDEED THEN DM @BossOPMC
 ``CPU&GPU CRYPTO AUTOBAN`` IT CAN BAN ALL CRYPTO IF YOU ENABLE ``anti.sh``
 ``MORE COMMAND AND PACKAGE ADDING SOON``
 
-# Security Policy
-
-## Supported Versions
+## OS Supported Versions
 
 Use this section to tell people about which versions of your project are
 currently being supported with security updates.
