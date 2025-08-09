@@ -20,15 +20,6 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Verify the key
-CORRECT_KEY="crashcloud95"
-read -p "Enter the setup key to proceed: " USER_KEY
-
-if [[ "$USER_KEY" != "$CORRECT_KEY" ]]; then
-    echo "Invalid key. Access denied."
-    exit 1
-fi
-echo "Key verified successfully. Proceeding with setup..."
 
 # Clone the repository
 REPO_URL="https://github.com/BossOPMC94/CRASHCLOUD-VPS-MAKER-BOT.git"
